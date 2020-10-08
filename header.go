@@ -39,11 +39,11 @@ func (d *Diamond) withSignature(tenant, group string) headerSetter {
 		toSignList = append(toSignList, strconv.FormatInt(now, 10))
 
 		str := strings.Join(toSignList, "+")
-		signature, err := HMACSHA1Encrypt(str, d.option.secretKey)
+		signature, err := HMACSHA1Encrypt(str, d.option.AcmOption.secretKey)
 		if err != nil {
 			return err
 		}
-		header.Set(spssAccessKeyHeader, d.option.accessKey)
+		header.Set(spssAccessKeyHeader, d.option.AcmOption.accessKey)
 		header.Set(timeStampHeader, strconv.FormatInt(now, 10))
 		header.Set(spasSignatureHeader, signature)
 		return nil

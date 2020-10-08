@@ -2,9 +2,13 @@ package aliacm
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"net/http"
+	"strings"
 )
+
+const encryptedDataKeyHeader = "Encrypted-Data-Key"
 
 // GetConfigRequest 获取配置参数
 type GetConfigRequest struct {
@@ -42,5 +46,42 @@ func (d *Diamond) GetConfig(args *GetConfigRequest) ([]byte, error) {
 	if !response.Success() {
 		return nil, errors.New(response.String())
 	}
-	return response.Body(), nil
+
+	config := response.Body()
+
+	if d.kmsClient != nil {
+		dataId := args.DataID[:]
+		body := string(response.Body()[:])
+		switch {
+		case strings.HasPrefix(dataId, "cipher-kms-aes-128-"):
+			dataKey, err := d.KMSDecrypt(response.Header().Get(encryptedDataKeyHeader))
+			if err != nil {
+				return nil, err
+			}
+
+			bodyByte, err := base64.StdEncoding.DecodeString(body)
+			if err != nil {
+				return nil, err
+			}
+			dataKeyByte, err := base64.StdEncoding.DecodeString(dataKey)
+			if err != nil {
+				return nil, err
+			}
+
+			config, err = AesDecrypt(bodyByte, dataKeyByte)
+			if err != nil {
+				return nil, err
+			}
+
+		case strings.HasPrefix(dataId, "cipher-"):
+			configStr, err := d.KMSDecrypt(body)
+			if err != nil {
+				return nil, err
+			}
+			config = []byte(configStr)
+
+		}
+	}
+
+	return config, nil
 }
