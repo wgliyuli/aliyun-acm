@@ -6,7 +6,7 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 )
 
-func (d *Diamond) KMSDecrypt(content string) (string, error) {
+func (d *Diamond) kmsDecrypt(content string) (string, error) {
 	if d.kmsClient == nil {
 		return "", fmt.Errorf("kms client need to initialize ")
 	}

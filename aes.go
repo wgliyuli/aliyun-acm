@@ -19,9 +19,9 @@ func newECB(b cipher.Block) *ecb {
 
 type ecbEncrypter ecb
 
-// NewECBEncrypter returns a BlockMode which encrypts in electronic code book
+// newECBEncrypter returns a BlockMode which encrypts in electronic code book
 // mode, using the given Block.
-func NewECBEncrypter(b cipher.Block) cipher.BlockMode {
+func newECBEncrypter(b cipher.Block) cipher.BlockMode {
 	return (*ecbEncrypter)(newECB(b))
 }
 func (x *ecbEncrypter) BlockSize() int { return x.blockSize }
@@ -41,9 +41,9 @@ func (x *ecbEncrypter) CryptBlocks(dst, src []byte) {
 
 type ecbDecrypter ecb
 
-// NewECBDecrypter returns a BlockMode which decrypts in electronic code book
+// newECBDecrypter returns a BlockMode which decrypts in electronic code book
 // mode, using the given Block.
-func NewECBDecrypter(b cipher.Block) cipher.BlockMode {
+func newECBDecrypter(b cipher.Block) cipher.BlockMode {
 	return (*ecbDecrypter)(newECB(b))
 }
 func (x *ecbDecrypter) BlockSize() int { return x.blockSize }
@@ -62,20 +62,20 @@ func (x *ecbDecrypter) CryptBlocks(dst, src []byte) {
 }
 
 // ECB PKCS5 解密
-func AesDecrypt(crypted, key []byte) ([]byte, error) {
+func aesDecrypt(crypted, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
-	blockMode := NewECBDecrypter(block)
+	blockMode := newECBDecrypter(block)
 	origData := make([]byte, len(crypted))
 	blockMode.CryptBlocks(origData, crypted)
-	origData = PKCS5UnPadding(origData)
+	origData = pkcs5UnPadding(origData)
 	return origData, nil
 }
 
 // PKCS5UnPadding
-func PKCS5UnPadding(origData []byte) []byte {
+func pkcs5UnPadding(origData []byte) []byte {
 	length := len(origData)
 	// 去掉最后一个字节 unpadding 次
 	unpadding := int(origData[length-1])

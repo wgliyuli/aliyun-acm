@@ -6,9 +6,9 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-)
 
-const encryptedDataKeyHeader = "Encrypted-Data-Key"
+	"github.com/xiaojiaoyu100/cast"
+)
 
 // GetConfigRequest 获取配置参数
 type GetConfigRequest struct {
@@ -47,40 +47,48 @@ func (d *Diamond) GetConfig(args *GetConfigRequest) ([]byte, error) {
 		return nil, errors.New(response.String())
 	}
 
+	config, err := d.getConfig(response, args.DataID)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (d *Diamond) getConfig(response *cast.Response, dataId string) ([]byte, error) {
 	config := response.Body()
+	if d.kmsClient == nil {
+		return config, nil
+	}
 
-	if d.kmsClient != nil {
-		dataId := args.DataID[:]
-		body := string(response.Body()[:])
-		switch {
-		case strings.HasPrefix(dataId, "cipher-kms-aes-128-"):
-			dataKey, err := d.KMSDecrypt(response.Header().Get(encryptedDataKeyHeader))
-			if err != nil {
-				return nil, err
-			}
-
-			bodyByte, err := base64.StdEncoding.DecodeString(body)
-			if err != nil {
-				return nil, err
-			}
-			dataKeyByte, err := base64.StdEncoding.DecodeString(dataKey)
-			if err != nil {
-				return nil, err
-			}
-
-			config, err = AesDecrypt(bodyByte, dataKeyByte)
-			if err != nil {
-				return nil, err
-			}
-
-		case strings.HasPrefix(dataId, "cipher-"):
-			configStr, err := d.KMSDecrypt(body)
-			if err != nil {
-				return nil, err
-			}
-			config = []byte(configStr)
-
+	body := string(response.Body()[:])
+	switch {
+	case strings.HasPrefix(dataId, "cipher-kms-aes-128-"):
+		dataKey, err := d.kmsDecrypt(response.Header().Get("Encrypted-Data-Key"))
+		if err != nil {
+			return nil, err
 		}
+
+		bodyByte, err := base64.StdEncoding.DecodeString(body)
+		if err != nil {
+			return nil, err
+		}
+		dataKeyByte, err := base64.StdEncoding.DecodeString(dataKey)
+		if err != nil {
+			return nil, err
+		}
+
+		config, err = aesDecrypt(bodyByte, dataKeyByte)
+		if err != nil {
+			return nil, err
+		}
+
+	case strings.HasPrefix(dataId, "cipher-"):
+		configStr, err := d.kmsDecrypt(body)
+		if err != nil {
+			return nil, err
+		}
+		config = []byte(configStr)
 	}
 
 	return config, nil
