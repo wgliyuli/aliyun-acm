@@ -1,14 +1,14 @@
 package aliacm
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/kms"
 )
 
 func (d *Diamond) kmsDecrypt(content string) (string, error) {
 	if d.kmsClient == nil {
-		return "", fmt.Errorf("kms client need to initialize ")
+		return "", errors.New("kms client need to initialize ")
 	}
 	request := kms.CreateDecryptRequest()
 	request.Method = "POST"

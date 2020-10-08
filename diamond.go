@@ -2,6 +2,7 @@ package aliacm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -47,19 +48,8 @@ const (
 
 // Option 参数设置
 type Option struct {
-	AcmOption
-	KmsOption
-}
-
-type AcmOption struct {
 	addr      string
 	tenant    string
-	accessKey string
-	secretKey string
-}
-
-type KmsOption struct {
-	regionId  string
 	accessKey string
 	secretKey string
 }
@@ -81,7 +71,7 @@ type Diamond struct {
 // New 产生Diamond实例
 func New(setters ...Setter) (*Diamond, error) {
 	if len(setters) == 0 {
-		return nil, fmt.Errorf("Lack of setter ")
+		return nil, errors.New("Lack of setter ")
 	}
 
 	c, err := cast.New(

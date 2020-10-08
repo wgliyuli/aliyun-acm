@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/xiaojiaoyu100/cast"
+	"github.com/xiaojiaoyu100/lizard/convert"
 )
 
 // GetConfigRequest 获取配置参数
@@ -61,7 +62,7 @@ func (d *Diamond) getConfig(response *cast.Response, dataId string) ([]byte, err
 		return config, nil
 	}
 
-	body := string(response.Body()[:])
+	body := convert.ByteToString(response.Body())
 	switch {
 	case strings.HasPrefix(dataId, "cipher-kms-aes-128-"):
 		dataKey, err := d.kmsDecrypt(response.Header().Get("Encrypted-Data-Key"))
@@ -88,7 +89,7 @@ func (d *Diamond) getConfig(response *cast.Response, dataId string) ([]byte, err
 		if err != nil {
 			return nil, err
 		}
-		config = []byte(configStr)
+		config = convert.StringToByte(configStr)
 	}
 
 	return config, nil
